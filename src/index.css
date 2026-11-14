@@ -1,0 +1,490 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Global resets ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body, #root {
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Quicksand', sans-serif;
+  background-color: #1a0b1f;
+  color: #fff7f0;
+  overflow-x: hidden;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a0b1f; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff7eb6 0%, #f5d089 100%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #ff7eb6; }
+* { scrollbar-width: thin; scrollbar-color: #ff7eb6 #1a0b1f; }
+
+/* ── Animated gradient background ── */
+.bg-animated {
+  background: linear-gradient(140deg, #1d0a22 0%, #48143d 28%, #260a2a 58%, #421338 82%, #19081e 100%);
+  background-size: 300% 300%;
+  animation: gradientShift 22s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-animated {
+    animation: none;
+    background: #1d0a22;
+  }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* ── Floating hearts & falling petals ── */
+.particle-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.heart, .petal {
+  position: absolute;
+  top: -60px;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart, .petal { animation: none; opacity: 0; }
+}
+
+/* Hearts */
+.heart {
+  font-size: clamp(10px, 2vw, 20px);
+  animation-name: floatHeart;
+}
+
+@keyframes floatHeart {
+  0% {
+    transform: translateY(-60px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% {
+    transform: translateY(110dvh) rotate(360deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Petals */
+.petal {
+  width: clamp(6px, 1.5vw, 14px);
+  height: clamp(9px, 2vw, 18px);
+  border-radius: 60% 40% 60% 40%;
+  animation-name: fallPetal;
+}
+
+@keyframes fallPetal {
+  0% {
+    transform: translateY(-60px) rotate(0deg) translateX(0px);
+    opacity: 0;
+  }
+  10% { opacity: 0.65; }
+  50% {
+    transform: translateY(50dvh) rotate(180deg) translateX(30px);
+  }
+  90% { opacity: 0.35; }
+  100% {
+    transform: translateY(110dvh) rotate(360deg) translateX(-20px);
+    opacity: 0;
+  }
+}
+
+/* ── Multi-layered romantic glow ── */
+.rose-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(245, 208, 137, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 50% 45%, rgba(255, 126, 182, 0.24) 0%, transparent 60%),
+    radial-gradient(ellipse 85% 65% at 50% 85%, rgba(68, 18, 58, 0.5) 0%, transparent 75%);
+}
+
+/* ── Safe-area content wrapper ── */
+.safe-content {
+  padding-top:    calc(1rem + var(--safe-top));
+  padding-bottom: calc(1rem + var(--safe-bottom));
+  padding-left:   calc(1rem + var(--safe-left));
+  padding-right:  calc(1rem + var(--safe-right));
+}
+
+/* ── Shimmer gold gradient text ── */
+.shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    #f5d089 0%,
+    #ffffff 20%,
+    #ffd79e 38%,
+    #f8c870 58%,
+    #ffffff 78%,
+    #f5d089 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerText 3.2s linear infinite;
+}
+
+@keyframes shimmerText {
+  from { background-position: 0%   center; }
+  to   { background-position: 220% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-gold {
+    background: #f5d089;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: none;
+  }
+}
+
+/* ── Shimmer Rose gradient text ── */
+.shimmer-rose {
+  background: linear-gradient(
+    90deg,
+    #ff7eb6 0%,
+    #ffd6e0 25%,
+    #ff7eb6 50%,
+    #ffd6e0 75%,
+    #ff7eb6 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerText 4s linear infinite;
+}
+
+/* ── Section heading decorator ── */
+.section-heading {
+  text-align: center;
+  position: relative;
+}
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 2px;
+  margin: 0.75rem auto 0;
+  background: linear-gradient(90deg, transparent, #ff7eb6, transparent);
+  box-shadow: 0 0 8px rgba(255, 126, 182, 0.6);
+  border-radius: 1px;
+}
+
+/* ── Timeline glowing rose line ── */
+.timeline-line {
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #ff7eb6 12%,
+    #ff7eb6 88%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0  6px 1px rgba(255, 126, 182, 0.35),
+    0 0 16px 2px rgba(255, 126, 182, 0.18);
+}
+
+/* ── Gallery carousel ── */
+.gallery-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 1.25rem;
+  padding: 2.5rem calc(50vw - 110px);
+  align-items: flex-end;
+}
+.gallery-carousel::-webkit-scrollbar { display: none; }
+
+/* ── Gallery item wrapper (snap unit) ── */
+.gallery-item {
+  scroll-snap-align: center;
+  flex: 0 0 auto;
+}
+
+/* ── Polaroid frame ── */
+.polaroid {
+  background: #fff7f0;
+  padding: 12px 12px 44px;
+  width: 210px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow:
+    0  8px 28px rgba(0, 0, 0, 0.38),
+    0  2px  8px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.polaroid:hover,
+.polaroid:focus-visible {
+  outline: none;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0  4px 12px rgba(255, 126, 182, 0.25),
+    0  0  28px rgba(255, 126, 182, 0.15);
+  transform: translateY(-4px);
+}
+
+.polaroid-photo {
+  width:  186px;
+  height: 186px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 126, 182, 0.06);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.08);
+}
+
+.polaroid-caption {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.3;
+  color: rgba(58, 18, 51, 0.72);
+  text-align: center;
+}
+
+/* ── Large polaroid (lightbox) ── */
+.polaroid-lg {
+  width:   280px;
+  padding: 14px 14px 56px;
+}
+.polaroid-photo-lg {
+  width:  252px;
+  height: 252px;
+}
+
+/* ════════════════════════════════════════════
+   Video player
+   ════════════════════════════════════════════ */
+.video-container {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  width: 100%;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: #0d050f;
+  border: 2px solid rgba(255, 126, 182, 0.40);
+  box-shadow:
+    0 0  0  1px rgba(255, 126, 182, 0.12),
+    0 0 32px    rgba(255, 126, 182, 0.22),
+    0 0 64px    rgba(255, 126, 182, 0.10),
+    0 20px 56px rgba(0, 0, 0, 0.55);
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay that holds the custom play button */
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 11, 31, 0.30);
+}
+
+/* Custom play button */
+.play-btn {
+  position: relative;
+  width:  88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(255, 126, 182, 0.18);
+  border: 2px solid rgba(255, 126, 182, 0.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 0 0  8px rgba(255, 126, 182, 0.07),
+    0 0 28px   rgba(255, 126, 182, 0.42);
+  transition: box-shadow 0.2s ease;
+}
+.play-btn:hover {
+  box-shadow:
+    0 0 0 12px rgba(255, 126, 182, 0.11),
+    0 0 44px   rgba(255, 126, 182, 0.65);
+}
+.play-btn:focus-visible {
+  outline: 2px solid rgba(255, 126, 182, 0.8);
+  outline-offset: 4px;
+}
+
+/* ════════════════════════════════════════════
+   Paper / Letter card
+   ════════════════════════════════════════════ */
+.paper-card {
+  background-color: #fff7f0;
+  border-radius: 3px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 1.74rem,
+    rgba(255, 126, 182, 0.055) 1.74rem,
+    rgba(255, 126, 182, 0.055) 1.75rem
+  );
+  background-size: 100% 1.75rem;
+  background-attachment: local;
+  box-shadow:
+    0  1px  0   #e8d5c4,
+    0  6px 20px rgba(0, 0, 0, 0.28),
+    0 20px 60px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Dog-ear fold — bottom-right corner */
+.paper-fold {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width:  0;
+  height: 0;
+  border-left:   28px solid transparent;
+  border-bottom: 28px solid rgba(26, 11, 31, 0.12);
+  filter: drop-shadow(-2px -2px 3px rgba(0,0,0,0.12));
+  border-radius: 0 0 3px 0;
+}
+
+/* ── Wax seal ── */
+.wax-seal {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width:  52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #ff7eb6 0%, #b02060 100%);
+  box-shadow:
+    0  4px 14px rgba(176, 32, 96, 0.55),
+    0  0  22px  rgba(255, 126, 182, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.wax-heart {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Typewriter cursor blink ── */
+.letter-cursor {
+  display: inline-block;
+  color: #ff7eb6;
+  font-weight: 300;
+  animation: cursorBlink 0.75s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-cursor { animation: none; opacity: 1; }
+}
+
+/* ════════════════════════════════════════════
+   Envelope Intro — Enhanced
+   ════════════════════════════════════════════ */
+.envelope-bg {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 126, 182, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(245, 208, 137, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 214, 224, 0.05) 0%, transparent 40%),
+    #1a0b1f;
+}
+
+/* ════════════════════════════════════════════
+   Section-level glow accents (per-section aura)
+   ════════════════════════════════════════════ */
+.section-glow-rose {
+  position: relative;
+}
+.section-glow-rose::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 500px;
+  height: 60%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,126,182,0.08) 0%, transparent 60%);
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.section-glow-gold {
+  position: relative;
+}
+.section-glow-gold::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  max-width: 400px;
+  height: 50%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,208,137,0.07) 0%, transparent 60%);
+  filter: blur(40px);
+  z-index: 0;
+}
