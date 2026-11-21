@@ -21,7 +21,7 @@ export default function App() {
     <div className="relative min-h-[100dvh] bg-animated font-sans text-cream overflow-x-hidden">
 
       {/* ── Background music ── */}
-      <audio ref={audioRef} src="/audio/music.mp3" loop preload="auto" playsInline />
+      <audio ref={audioRef} src="/audio/soniyo.mp3" loop preload="auto" playsInline />
 
       {/* ── Ambient background ── */}
       <ParticleBackground />
