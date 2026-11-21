@@ -90,6 +90,31 @@ export default function Hero() {
       className="relative flex flex-col items-center justify-center min-h-[100dvh] px-4 py-12 md:py-20 text-center select-none overflow-hidden"
       aria-label="Birthday celebration hero"
     >
+      {/* ── Mobile Background Photo (1.jpeg) with romantic velvet overlay ── */}
+      <div className="absolute inset-0 md:hidden pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <img
+          src="/photos/1.jpeg"
+          alt="Landing backdrop"
+          className="w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08] saturate-[1.1]"
+        />
+        {/* Velvety gradient fade to preserve text contrast & seamlessly blend with theme */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(29, 10, 34, 0.72) 0%, rgba(29, 10, 34, 0.45) 30%, rgba(29, 10, 34, 0.65) 70%, #1d0a22 100%)',
+          }}
+        />
+        {/* Soft romantic rose aura overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse at 50% 35%, rgba(255, 126, 182, 0.22) 0%, transparent 75%)',
+          }}
+        />
+      </div>
+
       {/* ── Central Romantic Radial Aurora (behind titles) ── */}
       <div
         className="absolute w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] rounded-full pointer-events-none"
