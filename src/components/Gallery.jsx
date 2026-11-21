@@ -23,6 +23,7 @@ const FLOAT_DELAY = [0.0, 0.5, 0.9, 0.25, 0.65, 1.1];
 /* ─── Polaroid card (carousel item) ─── */
 function PolaroidCard({ photo, index, onClick }) {
   const [imgError, setImgError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   return (
     /*
@@ -52,8 +53,8 @@ function PolaroidCard({ photo, index, onClick }) {
           aria-label={`Open photo: ${photo.caption}`}
           onKeyDown={e => e.key === 'Enter' && onClick()}
         >
-          {/* Photo area */}
-          <div className="polaroid-photo">
+          {/* Photo area with instant loading & smooth fade */}
+          <div className="polaroid-photo relative overflow-hidden bg-rose/10">
             {imgError ? (
               /* Placeholder when file doesn't exist yet */
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-40">
@@ -61,14 +62,26 @@ function PolaroidCard({ photo, index, onClick }) {
                 <span className="font-sans text-xs text-wine/60">photo {index + 1}</span>
               </div>
             ) : (
-              <img
-                src={photo.src}
-                alt={photo.caption}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
-                onError={() => setImgError(true)}
-              />
+              <>
+                {/* Subtle soft shimmer placeholder while image loads */}
+                {!isLoaded && (
+                  <div className="absolute inset-0 animate-pulse bg-gradient-to-tr from-rose/15 via-blush/20 to-wine/20 flex items-center justify-center">
+                    <span className="text-xl opacity-35">🌸</span>
+                  </div>
+                )}
+                <img
+                  src={photo.src}
+                  alt={photo.caption}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority={index < 2 ? "high" : "auto"}
+                  onLoad={() => setIsLoaded(true)}
+                  onError={() => setImgError(true)}
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                    isLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              </>
             )}
           </div>
 
@@ -193,6 +206,14 @@ function Lightbox({ index, onClose, onPrev, onNext }) {
    ══════════════════════════════════════════════ */
 export default function Gallery() {
   const [lightbox, setLightbox] = useState(null); // null = closed, number = open index
+
+  // Proactively warm browser cache so swiping on mobile is instant
+  useEffect(() => {
+    PHOTOS.forEach(p => {
+      const img = new Image();
+      img.src = p.src;
+    });
+  }, []);
 
   const openLightbox = useCallback(i => setLightbox(i), []);
   const closeLightbox = useCallback(() => setLightbox(null), []);
