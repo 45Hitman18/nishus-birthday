@@ -90,27 +90,27 @@ export default function Hero() {
       className="relative flex flex-col items-center justify-center min-h-[100dvh] px-4 py-12 md:py-20 text-center select-none overflow-hidden"
       aria-label="Birthday celebration hero"
     >
-      {/* ── Mobile Background Photo (1.jpeg) with romantic velvet overlay ── */}
-      <div className="absolute inset-0 md:hidden pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+      {/* ── Crisp & Vibrant Mobile Background Photo (1.jpeg) ── */}
+      <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden" aria-hidden="true">
         <img
           src="/photos/1.jpeg"
           alt="Landing backdrop"
-          className="w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08] saturate-[1.1]"
+          className="w-full h-full object-cover object-top sm:object-center filter brightness-[0.88] contrast-[1.05] saturate-[1.08] opacity-90 md:opacity-50 transition-opacity duration-500"
         />
-        {/* Velvety gradient fade to preserve text contrast & seamlessly blend with theme */}
+        {/* Delicate translucent vignette — keeps photo clear while making gold text pop */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(180deg, rgba(29, 10, 34, 0.72) 0%, rgba(29, 10, 34, 0.45) 30%, rgba(29, 10, 34, 0.65) 70%, #1d0a22 100%)',
+              'linear-gradient(180deg, rgba(26, 11, 31, 0.45) 0%, rgba(26, 11, 31, 0.18) 28%, rgba(26, 11, 31, 0.35) 65%, rgba(26, 11, 31, 0.88) 92%, #1a0b1f 100%)',
           }}
         />
-        {/* Soft romantic rose aura overlay */}
+        {/* Soft rose starlight highlight */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse at 50% 35%, rgba(255, 126, 182, 0.22) 0%, transparent 75%)',
+              'radial-gradient(ellipse at 50% 30%, rgba(255, 126, 182, 0.18) 0%, transparent 65%)',
           }}
         />
       </div>
