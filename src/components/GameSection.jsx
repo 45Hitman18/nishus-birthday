@@ -1,366 +1,383 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import Reveal from './Reveal';
 import GlassCard from './GlassCard';
 
 /* ─────────────────────────────────────────────────────────────
-   Card types — 8 pairs. Each has a love note revealed on match.
+   Wheel segments — 8 romantic surprises
    ───────────────────────────────────────────────────────────── */
-const CARD_TYPES = [
-  { label: 'heart',   emoji: '♥',  message: 'You are loved endlessly 💖' },
-  { label: 'blossom', emoji: '🌸', message: 'As beautiful as spring itself 🌷' },
-  { label: 'star',    emoji: '⭐', message: 'My brightest star, always ✨' },
-  { label: 'ribbon',  emoji: '🎀', message: 'A perfect gift to this world 🎁' },
-  { label: 'rose',    emoji: '🌹', message: 'Every rose reminds me of you 🌹' },
-  { label: 'letter',  emoji: '💌', message: 'Written in every heartbeat 💌' },
-  { label: 'cake',    emoji: '🎂', message: 'Sweeter than any birthday cake 🎂' },
-  { label: 'moon',    emoji: '🌙', message: 'I love you to the moon and back 🌙' },
+const SEGMENTS = [
+  { emoji: '💖', title: 'My Heart',      message: 'You hold the biggest piece of my heart, always & forever.' },
+  { emoji: '🌹', title: 'My Rose',       message: 'Like a rose, you bloom more beautiful with every passing day.' },
+  { emoji: '✨', title: 'My Star',       message: 'You light up every room you walk into — my brightest star.' },
+  { emoji: '💌', title: 'My Letter',     message: 'Every love song ever written was secretly made for you.' },
+  { emoji: '🌙', title: 'My Moon',       message: 'I love you to the moon and back — a million times over.' },
+  { emoji: '🎀', title: 'My Gift',       message: 'You are the most beautiful gift life has ever given me.' },
+  { emoji: '🌸', title: 'My Blossom',    message: 'With you, every ordinary moment turns into something magical.' },
+  { emoji: '🍰', title: 'My Sweetness',  message: 'Sweeter than all the cakes in the world — that is you, Nishu.' },
 ];
 
-/* Fisher-Yates shuffle of a doubled deck */
-function createDeck() {
-  const cards = [...CARD_TYPES, ...CARD_TYPES].map((t, i) => ({
-    id: i,
-    label:   t.label,
-    emoji:   t.emoji,
-    message: t.message,
-    flipped: false,
-    matched: false,
-  }));
-  for (let i = cards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cards[i], cards[j]] = [cards[j], cards[i]];
-  }
-  return cards;
+const TOTAL      = SEGMENTS.length;
+const SLICE_DEG  = 360 / TOTAL;
+
+/* Alternating petal colours */
+const COLOURS = [
+  'rgba(255,126,182,0.82)',
+  'rgba(90,22,65,0.88)',
+  'rgba(245,208,137,0.78)',
+  'rgba(80,18,60,0.90)',
+  'rgba(255,180,210,0.80)',
+  'rgba(100,25,70,0.88)',
+  'rgba(255,214,224,0.75)',
+  'rgba(70,15,55,0.92)',
+];
+
+/* ─────────────────────────────────────────────────────────────
+   Draw the wheel on a <canvas>
+   ───────────────────────────────────────────────────────────── */
+function drawWheel(canvas, rotationDeg) {
+  const ctx  = canvas.getContext('2d');
+  const size = canvas.width;
+  const cx   = size / 2;
+  const cy   = size / 2;
+  const r    = cx - 6;
+
+  ctx.clearRect(0, 0, size, size);
+
+  /* Outer glow ring */
+  const glow = ctx.createRadialGradient(cx, cy, r * 0.72, cx, cy, r + 6);
+  glow.addColorStop(0, 'rgba(245,208,137,0.0)');
+  glow.addColorStop(1, 'rgba(245,208,137,0.55)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+  ctx.fillStyle = glow;
+  ctx.fill();
+
+  SEGMENTS.forEach((seg, i) => {
+    const startAngle = ((rotationDeg + i * SLICE_DEG - 90) * Math.PI) / 180;
+    const endAngle   = startAngle + (SLICE_DEG * Math.PI) / 180;
+    const midAngle   = (startAngle + endAngle) / 2;
+
+    /* Slice */
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = COLOURS[i];
+    ctx.fill();
+
+    /* Slice border */
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+
+    /* Emoji */
+    const ex = cx + (r * 0.62) * Math.cos(midAngle);
+    const ey = cy + (r * 0.62) * Math.sin(midAngle);
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.rotate(midAngle + Math.PI / 2);
+    ctx.font             = `${size * 0.072}px serif`;
+    ctx.textAlign        = 'center';
+    ctx.textBaseline     = 'middle';
+    ctx.fillText(seg.emoji, 0, 0);
+    ctx.restore();
+
+    /* Label */
+    const lx = cx + (r * 0.36) * Math.cos(midAngle);
+    const ly = cy + (r * 0.36) * Math.sin(midAngle);
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(midAngle + Math.PI / 2);
+    ctx.font             = `bold ${size * 0.044}px 'Quicksand', sans-serif`;
+    ctx.textAlign        = 'center';
+    ctx.textBaseline     = 'middle';
+    ctx.fillStyle        = 'rgba(255,255,255,0.90)';
+    ctx.shadowColor      = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur       = 4;
+    ctx.fillText(seg.title, 0, 0);
+    ctx.restore();
+  });
+
+  /* Centre hub */
+  const hub = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.13);
+  hub.addColorStop(0, '#ffe9b0');
+  hub.addColorStop(1, '#c47e2a');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.13, 0, Math.PI * 2);
+  ctx.fillStyle    = hub;
+  ctx.shadowColor  = 'rgba(245,208,137,0.9)';
+  ctx.shadowBlur   = 14;
+  ctx.fill();
+  ctx.shadowBlur   = 0;
+  ctx.strokeStyle  = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth    = 2;
+  ctx.stroke();
+
+  /* Heart in centre */
+  ctx.font             = `${size * 0.07}px serif`;
+  ctx.textAlign        = 'center';
+  ctx.textBaseline     = 'middle';
+  ctx.fillStyle        = '#3a1233';
+  ctx.fillText('♥', cx, cy);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Single card component — fade+scale flip (avoids backface bugs)
+   Easing: ease-out cubic for spin slow-down
    ───────────────────────────────────────────────────────────── */
-function Card({ card, onClick, disabled }) {
-  const isFlipped = card.flipped || card.matched;
-  const isClickable = !isFlipped && !disabled;
-
-  return (
-    <motion.div
-      className="relative select-none"
-      style={{ aspectRatio: '1', cursor: isClickable ? 'pointer' : 'default' }}
-      onClick={() => isClickable && onClick(card.id)}
-      whileTap={isClickable ? { scale: 0.88 } : {}}
-      role="button"
-      aria-label={isFlipped ? card.emoji : 'Hidden card — tap to reveal'}
-      tabIndex={isClickable ? 0 : -1}
-      onKeyDown={e => e.key === 'Enter' && isClickable && onClick(card.id)}
-    >
-      {/* ══ BACK FACE ══ */}
-      <motion.div
-        className="absolute inset-0 rounded-xl flex items-center justify-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(145deg, #3a1233 0%, #1a0b1f 100%)',
-          border:     '1.5px solid rgba(255,126,182,0.22)',
-          boxShadow:  '0 4px 14px rgba(0,0,0,0.40)',
-        }}
-        animate={{ opacity: isFlipped ? 0 : 1, scale: isFlipped ? 0.80 : 1 }}
-        transition={{ duration: 0.22, ease: 'easeIn' }}
-      >
-        {/* subtle radial shine */}
-        <div
-          className="absolute inset-0 rounded-xl"
-          style={{
-            background:
-              'radial-gradient(circle at 35% 30%, rgba(255,126,182,0.18) 0%, transparent 65%)',
-          }}
-        />
-        <span className="relative font-serif text-xl text-rose/50 font-bold">?</span>
-      </motion.div>
-
-      {/* ══ FRONT FACE ══ */}
-      <motion.div
-        className="absolute inset-0 rounded-xl flex items-center justify-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(145deg, #4d1a42 0%, #2a0e28 100%)',
-          border:     card.matched
-            ? '1.5px solid rgba(245,208,137,0.65)'
-            : '1.5px solid rgba(255,214,224,0.22)',
-          boxShadow: card.matched
-            ? '0 0 20px rgba(245,208,137,0.22), 0 4px 14px rgba(0,0,0,0.40)'
-            : '0 4px 14px rgba(0,0,0,0.40)',
-        }}
-        animate={{
-          opacity: isFlipped ? 1 : 0,
-          scale:   isFlipped ? 1 : 0.80,
-        }}
-        transition={{ duration: 0.22, delay: isFlipped ? 0.18 : 0, ease: 'easeOut' }}
-      >
-        {/* Gold shimmer on matched */}
-        {card.matched && (
-          <motion.div
-            className="absolute inset-0 rounded-xl"
-            animate={{ opacity: [0.18, 0.45, 0.18] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            style={{
-              background:
-                'radial-gradient(circle at 50% 50%, rgba(245,208,137,0.18) 0%, transparent 70%)',
-            }}
-          />
-        )}
-
-        {/* Emoji */}
-        <motion.span
-          className="relative text-2xl md:text-3xl leading-none"
-          animate={card.matched ? { scale: [1, 1.3, 1] } : {}}
-          transition={{ duration: 0.38, delay: 0.05 }}
-        >
-          {card.emoji}
-        </motion.span>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Love-note toast — centred fixed overlay
-   ───────────────────────────────────────────────────────────── */
-function NoteToast({ message }) {
-  return (
-    <motion.div
-      className="fixed inset-x-4 top-[18%] z-50 flex justify-center pointer-events-none"
-      initial={{ opacity: 0, y: -16, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0,   scale: 1   }}
-      exit={{    opacity: 0, y: -20, scale: 0.88 }}
-      transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-    >
-      <GlassCard className="max-w-xs w-full text-center !py-3 !px-5">
-        <p className="font-serif text-base md:text-lg text-blush leading-snug">{message}</p>
-      </GlassCard>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Progress dots
-   ───────────────────────────────────────────────────────────── */
-function ProgressBar({ matchCount, total }) {
-  return (
-    <div className="flex items-center justify-between w-full">
-      <span className="font-sans text-[11px] text-blush/55 uppercase tracking-widest">
-        Matched
-      </span>
-      <div className="flex gap-1.5 items-center">
-        {Array.from({ length: total }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="rounded-full"
-            style={{
-              width: 9, height: 9,
-              background: i < matchCount ? '#f5d089' : 'rgba(255,214,224,0.18)',
-            }}
-            animate={i < matchCount ? { scale: [1, 1.45, 1] } : {}}
-            transition={{ duration: 0.32 }}
-          />
-        ))}
-      </div>
-      <span className="font-serif text-gold text-sm font-semibold tabular-nums">
-        {matchCount}/{total}
-      </span>
-    </div>
-  );
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   GameSection
+   GameSection — Spin the Wheel of Love
    ══════════════════════════════════════════════════════════════ */
 export default function GameSection() {
-  const [deck,       setDeck]       = useState(createDeck);
-  const [selected,   setSelected]   = useState([]);   // card ids
-  const [checking,   setChecking]   = useState(false);
-  const [toast,      setToast]      = useState(null);
-  const [matchCount, setMatchCount] = useState(0);
-  const [won,        setWon]        = useState(false);
-  const prefersReduced              = useReducedMotion();
-  const toastTimerRef               = useRef(null);
-  const checkTimerRef               = useRef(null);
+  const canvasRef      = useRef(null);
+  const rafRef         = useRef(null);
+  const rotRef         = useRef(0);  // actual rotation (no re-render needed mid-spin)
+  const [spinning,   setSpinning]   = useState(false);
+  const [result,     setResult]     = useState(null);
+  const [spinCount,  setSpinCount]  = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const prefersReduced = useReducedMotion();
 
-  /* ── Show a toast for 2.8 s ── */
-  const showToast = useCallback(msg => {
-    setToast(msg);
-    clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), 2800);
+  const SIZE = 300;
+
+  /* Initial draw */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width  = SIZE;
+    canvas.height = SIZE;
+    drawWheel(canvas, 0);
   }, []);
 
-  /* ── Tap a card ── */
-  const handleCardClick = useCallback(cardId => {
-    if (checking) return;
-    setDeck(prev => {
-      const c = prev.find(x => x.id === cardId);
-      if (!c || c.flipped || c.matched) return prev;
-      return prev.map(x => x.id === cardId ? { ...x, flipped: true } : x);
-    });
-    setSelected(prev => {
-      if (prev.length === 0)                return [cardId];
-      if (prev.length === 1 && prev[0] !== cardId) return [prev[0], cardId];
-      return prev;
-    });
-  }, [checking]);
+  /* ── Spin ── */
+  const spin = () => {
+    if (spinning) return;
+    setShowResult(false);
+    setResult(null);
+    setSpinning(true);
 
-  /* ── Check pair when 2 selected ── */
-  useEffect(() => {
-    if (selected.length !== 2) return;
-    setChecking(true);
-    const [id1, id2] = selected;
+    const extraSpins = 5 + Math.floor(Math.random() * 5);
+    const landingDeg = Math.floor(Math.random() * 360);
+    const totalDeg   = extraSpins * 360 + landingDeg;
+    const duration   = prefersReduced ? 800 : 3800;
 
-    checkTimerRef.current = setTimeout(() => {
-      setDeck(prev => {
-        const c1 = prev.find(c => c.id === id1);
-        const c2 = prev.find(c => c.id === id2);
-        if (!c1 || !c2) return prev;
+    const startRot  = rotRef.current;
+    const startTime = performance.now();
 
-        if (c1.label === c2.label) {
-          /* ✅ MATCH */
-          showToast(c1.message);
+    const canvas = canvasRef.current;
 
+    function animate(now) {
+      const elapsed  = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased    = easeOutCubic(progress);
+      const current  = (startRot + totalDeg * eased) % 360;
+
+      rotRef.current = current;
+      if (canvas) drawWheel(canvas, current);
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        /* Which segment is under the pointer (top = 0°) */
+        const normalised = ((360 - current) % 360);
+        const idx        = Math.floor(normalised / SLICE_DEG) % TOTAL;
+
+        setResult(idx);
+        setSpinCount(n => n + 1);
+        setSpinning(false);
+
+        setTimeout(() => {
+          setShowResult(true);
           if (!prefersReduced) {
             confetti({
-              particleCount: 35, spread: 65, startVelocity: 22,
-              origin: { x: 0.5, y: 0.55 },
-              colors: ['#ff7eb6', '#ffd6e0', '#f5d089', '#ffb3cc'],
-              scalar: 1.1, ticks: 160, gravity: 1.1,
+              particleCount: 90,
+              spread: 100,
+              startVelocity: 32,
+              origin: { x: 0.5, y: 0.6 },
+              colors: ['#ff7eb6', '#ffd6e0', '#f5d089', '#ffb3cc', '#fffbe0'],
+              scalar: 1.2,
+              ticks: 280,
+              gravity: 0.85,
             });
           }
+        }, 300);
+      }
+    }
 
-          setMatchCount(n => {
-            const next = n + 1;
-            if (next === CARD_TYPES.length) setTimeout(() => setWon(true), 600);
-            return next;
-          });
-          return prev.map(c =>
-            c.id === id1 || c.id === id2 ? { ...c, matched: true, flipped: true } : c
-          );
-        } else {
-          /* ❌ NO MATCH — flip back */
-          return prev.map(c =>
-            c.id === id1 || c.id === id2 ? { ...c, flipped: false } : c
-          );
-        }
-      });
-      setSelected([]);
-      setChecking(false);
-    }, 860);
-
-    return () => clearTimeout(checkTimerRef.current);
-  }, [selected, showToast, prefersReduced]);
-
-  /* ── Big win confetti ── */
-  useEffect(() => {
-    if (!won || prefersReduced) return;
-    const colors = ['#ff7eb6', '#ffd6e0', '#f5d089', '#ffb3cc', '#fffbe0'];
-    confetti({
-      particleCount: 160, spread: 120, startVelocity: 42,
-      origin: { x: 0.5, y: 0.5 }, colors, scalar: 1.5, ticks: 420, gravity: 0.78,
-    });
-  }, [won, prefersReduced]);
-
-  /* ── Reset ── */
-  const resetGame = () => {
-    clearTimeout(toastTimerRef.current);
-    clearTimeout(checkTimerRef.current);
-    setDeck(createDeck());
-    setSelected([]);
-    setChecking(false);
-    setToast(null);
-    setMatchCount(0);
-    setWon(false);
+    rafRef.current = requestAnimationFrame(animate);
   };
 
-  return (
-    <section className="relative py-20 px-4 section-glow-rose" aria-label="Memory matching game">
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-      {/* ── Toast ── */}
-      <AnimatePresence mode="wait">
-        {toast && <NoteToast key={toast} message={toast} />}
-      </AnimatePresence>
+  const seg = result !== null ? SEGMENTS[result] : null;
+
+  return (
+    <section
+      className="relative py-20 px-4 section-glow-rose overflow-hidden"
+      aria-label="Spin the Wheel of Love"
+    >
+      {/* Ambient glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(255,126,182,0.10) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+        aria-hidden="true"
+      />
 
       {/* ── Heading ── */}
       <Reveal>
-        <div className="section-heading mb-8">
-          <h2 className="font-script text-5xl md:text-6xl shimmer-rose">A Game for You</h2>
+        <div className="section-heading mb-10">
+          <h2 className="font-script text-5xl md:text-6xl shimmer-rose">Wheel of Love</h2>
           <p className="font-sans text-blush/45 text-xs tracking-[0.22em] uppercase mt-3">
-            match the cards · unlock my love notes
+            spin &amp; unlock a romantic surprise ✦
           </p>
         </div>
       </Reveal>
 
-      {/* ── Progress bar ── */}
-      <Reveal delay={0.12} className="max-w-[360px] mx-auto mb-5">
-        <GlassCard padding={false} className="px-5 py-3">
-          <ProgressBar matchCount={matchCount} total={CARD_TYPES.length} />
-        </GlassCard>
+      {/* ── Wheel + pointer ── */}
+      <Reveal delay={0.15} className="flex flex-col items-center gap-5">
+        <div className="relative flex flex-col items-center">
+
+          {/* Gold pointer arrow */}
+          <motion.div
+            className="relative z-20 mb-[-10px]"
+            animate={spinning ? { y: [0, -5, 0] } : {}}
+            transition={{ duration: 0.35, repeat: spinning ? Infinity : 0 }}
+          >
+            <div
+              style={{
+                width: 0, height: 0,
+                borderLeft:  '13px solid transparent',
+                borderRight: '13px solid transparent',
+                borderTop:   '24px solid #f5d089',
+                filter: 'drop-shadow(0 0 10px rgba(245,208,137,1))',
+              }}
+            />
+          </motion.div>
+
+          {/* Canvas */}
+          <canvas
+            ref={canvasRef}
+            width={SIZE}
+            height={SIZE}
+            className="rounded-full"
+            style={{
+              width: SIZE,
+              height: SIZE,
+              boxShadow: '0 0 55px rgba(255,126,182,0.28), 0 0 25px rgba(245,208,137,0.18), 0 10px 36px rgba(0,0,0,0.55)',
+            }}
+          />
+        </div>
+
+        {/* ── Spin button ── */}
+        <motion.button
+          onClick={spin}
+          disabled={spinning}
+          className="relative overflow-hidden rounded-full px-10 py-3.5 font-sans font-semibold text-sm uppercase tracking-[0.22em] mt-2
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+          style={{
+            background: spinning
+              ? 'rgba(50,15,45,0.5)'
+              : 'linear-gradient(135deg, #f5d089 0%, #d4883a 50%, #f5d089 100%)',
+            color: spinning ? 'rgba(245,208,137,0.4)' : '#3a1233',
+            boxShadow: spinning
+              ? 'inset 0 0 0 1.5px rgba(245,208,137,0.18)'
+              : '0 0 28px rgba(245,208,137,0.6), 0 4px 18px rgba(0,0,0,0.45)',
+          }}
+          whileHover={!spinning ? { scale: 1.06 } : {}}
+          whileTap={!spinning ? { scale: 0.93 } : {}}
+          transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+        >
+          {/* Shimmer sweep */}
+          {!spinning && (
+            <motion.div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%)',
+              }}
+              animate={{ x: ['-150%', '200%'] }}
+              transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.0, ease: 'linear' }}
+            />
+          )}
+          <span className="relative z-10">
+            {spinning ? '✦  Spinning…' : spinCount === 0 ? '✦  Spin Now' : '✦  Spin Again'}
+          </span>
+        </motion.button>
+
+        {/* Spin count */}
+        {spinCount > 0 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-sans text-[11px] text-blush/35 tracking-widest uppercase"
+          >
+            ✦ {spinCount} {spinCount === 1 ? 'spin' : 'spins'} so far ✦
+          </motion.p>
+        )}
       </Reveal>
 
-      {/* ── Card grid ── */}
-      <div className="max-w-[360px] md:max-w-[420px] mx-auto">
-        <div className="grid grid-cols-4 gap-2 md:gap-3">
-          {deck.map(card => (
-            <Card
-              key={card.id}
-              card={card}
-              onClick={handleCardClick}
-              disabled={checking || won}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Win state ── */}
-      <AnimatePresence>
-        {won && (
+      {/* ── Result card ── */}
+      <AnimatePresence mode="wait">
+        {showResult && seg && (
           <motion.div
-            className="mt-12 flex flex-col items-center gap-5 text-center"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0  }}
-            transition={{ duration: 0.65, ease: 'easeOut' }}
+            key={spinCount}
+            className="mt-10 flex flex-col items-center gap-4 text-center px-4"
+            initial={{ opacity: 0, y: 36, scale: 0.90 }}
+            animate={{ opacity: 1, y: 0,  scale: 1    }}
+            exit={{    opacity: 0, y: -16, scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 18 }}
           >
-            {/* Big win message */}
+            {/* Emoji burst */}
+            <motion.div
+              className="text-6xl"
+              animate={{ scale: [0.6, 1.3, 1], rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 0.65, ease: 'easeOut' }}
+            >
+              {seg.emoji}
+            </motion.div>
+
+            {/* Title */}
             <motion.p
               className="font-script text-4xl md:text-5xl text-rose"
-              animate={{ scale: [1, 1.06, 1] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ textShadow: '0 0 24px rgba(255,126,182,0.65)' }}
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
             >
-              You matched all my love! 💖
+              {seg.title}
             </motion.p>
 
+            {/* Message */}
             <GlassCard className="max-w-xs text-center">
-              <p className="font-serif text-base md:text-lg text-blush/80 italic leading-relaxed">
-                Just like you, everything you do fits perfectly.
+              <p className="font-serif text-base md:text-lg text-blush/85 italic leading-relaxed">
+                {seg.message}
               </p>
             </GlassCard>
 
-            {/* Replay */}
-            <motion.button
-              className="font-sans text-xs text-blush/50 uppercase tracking-[0.2em]
-                         border border-blush/20 rounded-full px-6 py-2.5
-                         hover:border-rose/50 hover:text-rose/80 transition-colors
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-rose/50"
-              onClick={resetGame}
-              whileTap={{ scale: 0.93 }}
-              whileHover={{ scale: 1.04 }}
-            >
-              play again  ↺
-            </motion.button>
+            {/* Ornamental line */}
+            <div className="flex items-center gap-3 mt-1 opacity-50">
+              <span className="w-10 h-px bg-gradient-to-r from-transparent to-rose/60" />
+              <span className="text-gold text-sm">✦</span>
+              <span className="w-10 h-px bg-gradient-to-l from-transparent to-rose/60" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Hint (first-time only) ── */}
-      {matchCount === 0 && (
-        <Reveal delay={0.5}>
-          <p className="text-center font-sans text-[11px] text-blush/30 tracking-widest mt-5">
-            tap any card to begin
+      {/* First-time hint */}
+      {spinCount === 0 && !spinning && (
+        <Reveal delay={0.6}>
+          <p className="text-center font-sans text-[11px] text-blush/28 tracking-widest mt-6">
+            tap the button to spin ♥
           </p>
         </Reveal>
       )}
     </section>
   );
 }
-
